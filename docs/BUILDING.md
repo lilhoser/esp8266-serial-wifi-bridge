@@ -44,7 +44,7 @@ arduino-cli core update-index
 arduino-cli core install esp8266:esp8266@3.1.2
 arduino-cli compile \
   --fqbn 'esp8266:esp8266:generic:eesz=4M,FlashMode=dout,FlashFreq=40,CrystalFreq=26,wipe=none' \
-  --output-dir build .
+  --output-dir build firmware/esp8266-serial-wifi-bridge
 ```
 
 Run `scripts/verify-release.ps1` or `scripts/verify-release.sh` to compare a

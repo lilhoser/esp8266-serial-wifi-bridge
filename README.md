@@ -71,7 +71,7 @@ commands.
 
 ## Repository contents
 
-- `esp8266-serial-wifi-bridge.ino` - firmware source
+- `firmware/esp8266-serial-wifi-bridge/` - Arduino firmware source
 - `release/` - ready-to-flash image and checksum
 - `scripts/` - toolchain, build, flash, and verification helpers
 - `configure.py` - optional masked modern-host Wi-Fi configurator
