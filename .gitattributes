@@ -1,0 +1,9 @@
+* text=auto
+*.sh text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.ino text eol=lf
+*.py text eol=lf
+*.md text eol=lf
+*.txt text eol=lf
+*.bin binary

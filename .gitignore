@@ -1,0 +1,7 @@
+.tools/
+build/
+__pycache__/
+*.py[cod]
+*.elf
+*.map
+*.readback.bin
