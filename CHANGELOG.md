@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Send a visible PASS acknowledgement to the serial terminal after the
+  interactive bidirectional test receives its expected response.
+
 ## v0.2.0-rc1 - 2026-08-26
 
 - Display and confirm the exact received SSID before password entry.

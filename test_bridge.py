@@ -75,6 +75,9 @@ def main() -> int:
             if args.echo:
                 connection.sendall(render_for_terminal(chunk))
             if expected in edited_lines(bytes(received)):
+                connection.sendall(
+                    b"\r\nPASS - BIDIRECTIONAL BRIDGE CONFIRMED\r\n"
+                )
                 print("PASS: bidirectional bridge confirmed", flush=True)
                 return 0
     print(f"FAIL: received {bytes(received)!r}", flush=True)
