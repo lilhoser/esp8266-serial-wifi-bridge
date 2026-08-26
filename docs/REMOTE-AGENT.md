@@ -46,7 +46,7 @@ and does not install itself or start automatically.
    C:\W98AGENT 19200
    ```
 
-8. After the `W98AGENT V4` banner appears, type `START` in the modern client.
+8. After the `W98AGENT V9` banner appears, type `START` in the modern client.
    A successful handshake reports `READY W98SER/2 19200`.
 9. Use the session commands below. Finish with `BYE`, which acknowledges the
    request and stops the Windows 98 agent cleanly.
@@ -62,15 +62,20 @@ PUT .\TOOL.EXE C:\TOOL.EXE
 BYE
 ```
 
-- `EXEC` runs `COMMAND.COM /C` on Windows 98, captures stdout and stderr, and
-  returns its exit code. The process timeout is five minutes.
+- `EXEC` runs `COMMAND.COM /C` on Windows 98 with stdin redirected to `NUL`,
+  captures stdout and stderr, and returns its exit code. The process timeout is
+  60 seconds. A timeout is reported without force-terminating the DOS process,
+  because doing so can wedge Windows 98's WinOldAp subsystem. Do not run
+  interactive commands such as `PAUSE`; launch longer finite batches with
+  `START /MIN` and poll an explicit completion marker.
 - `GET` downloads one file and writes it to the specified modern-host path.
 - `PUT` uploads one file. A failed or incomplete upload is deleted rather than
   left under its requested destination name.
 - `BYE` stops the agent and closes the TCP session normally.
 
 Paths containing spaces should be quoted. Session operations are sequential;
-do not open a second TCP client while the agent is active.
+do not open a second TCP client during a healthy operation. A new connection is
+the supported recovery path after the previous client has crashed.
 
 ## Direct null-modem operation
 
@@ -107,11 +112,22 @@ last-hop UART limit.
   incompatible agent.
 - If the bridge command prompt appears instead of the handshake, the TCP peer
   is not connected. Close the agent and establish TCP first.
+- Build 15 and newer transfer ownership to the newest TCP connection and latch
+  transparent bridge mode until hardware reset. During a disconnected period,
+  orphaned serial output is discarded instead of being interpreted as firmware
+  console commands.
+- W98AGENT V9 and the modern client use an exact tokenized `SYNC` barrier after
+  `READY`. Delayed replies from an abandoned operation are drained before the
+  first new command is sent.
+- `--legacy-sync` is only for a clean, connected upgrade session with W98AGENT
+  V4 through V7. Do not use it for recovery or normal V9 operation.
 - A transfer retry is expected after a damaged frame. Ten consecutive failures
   indicate a dead/mismatched connection and abort safely.
 - If Windows suspended while COM1 was open, close the agent and its DOS window,
   then start a fresh session. Do not reuse a terminal that resumed with garbled
   serial state.
+- After `BYE`, Windows 98 may leave the last banner visible even though the
+  agent exited and released COM1. Press Enter once to repaint the `C:\>` prompt.
 - If typing in unrelated programs also skips or duplicates keys, inspect the
   keyboard connector separately; that is not agent protocol traffic.
 

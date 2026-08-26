@@ -35,8 +35,8 @@ flashing.
 Most users do not need to build anything. Download these two files from the
 latest GitHub release:
 
-- `esp8266-serial-wifi-bridge-v0.4.0-rc1.bin`
-- `esp8266-serial-wifi-bridge-windows98-tools-v0.4.0-rc1.zip` (optional)
+- `esp8266-serial-wifi-bridge-v0.4.0-rc2.bin`
+- `esp8266-serial-wifi-bridge-windows98-tools-v0.4.0-rc2.zip` (optional)
 - `SHA256SUMS.txt`
 
 On a modern Windows computer, clone or download this repository, open
@@ -63,7 +63,7 @@ bridge and wait. Startup always finishes its Wi-Fi attempt before displaying
 the prompt:
 
 ```text
-VINTAGE SERIAL WIFI BRIDGE 13 VARIABLE BAUD RC
+VINTAGE SERIAL WIFI BRIDGE 15 TRANSPARENT RC
 CONNECTING TO example-network
 WIFI CONNECTED - IP <assigned-address>
 TCP 23 READY

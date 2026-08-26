@@ -61,7 +61,7 @@ class SocketPort:
 
 
 class Agent:
-    def __init__(self, port_name, baudrate=115200):
+    def __init__(self, port_name, baudrate=115200, allow_legacy_sync=False):
         if port_name.lower().startswith("tcp://"):
             self.port = SocketPort(port_name)
         else:
@@ -73,6 +73,7 @@ class Agent:
             self.port.rts = False
             self.port.open()
         self.pending = bytearray()
+        self.allow_legacy_sync = allow_legacy_sync
 
     def close(self):
         self.port.close()
@@ -242,14 +243,45 @@ class Agent:
 
     def hello(self):
         self.port.reset_input_buffer()
-        self.send_line("HELLO")
-        response = self.read_line()
-        if not response.startswith("READY\tW98SER/2\t"):
-            raise RuntimeError(response)
-        return response
+        deadline = time.monotonic() + 90
+        last_response = None
+        while time.monotonic() < deadline:
+            self.send_line("HELLO")
+            attempt_deadline = min(deadline, time.monotonic() + 5)
+            while time.monotonic() < attempt_deadline:
+                try:
+                    response = self.read_line(
+                        max(0.1, attempt_deadline - time.monotonic())
+                    )
+                except TimeoutError:
+                    break
+                last_response = response
+                if response.startswith("READY\tW98SER/2\t"):
+                    token = f"{time.time_ns() & 0xFFFFFFFF:08X}"
+                    self.send_line(f"SYNC\t{token}")
+                    sync_deadline = time.monotonic() + 15
+                    while time.monotonic() < sync_deadline:
+                        try:
+                            sync_response = self.read_line(
+                                max(0.1, sync_deadline - time.monotonic())
+                            )
+                        except TimeoutError:
+                            break
+                        if sync_response == f"SYNCED\t{token}":
+                            return response
+                        # V4-V7 do not implement SYNC.  Their error is still
+                        # an ordered barrier during a clean bootstrap session.
+                        if (self.allow_legacy_sync and
+                                sync_response == "ERR\tUNKNOWN_COMMAND"):
+                            return response
+                    raise TimeoutError("agent synchronization barrier timed out")
+        raise TimeoutError(
+            "agent did not resynchronize within 90 seconds"
+            + (f"; last response was {last_response!r}" if last_response else "")
+        )
 
-    def receive_payload(self, expected_kind):
-        header = self.read_line(20)
+    def receive_payload(self, expected_kind, header_timeout=20):
+        header = self.read_line(header_timeout)
         fields = header.split("\t")
         if fields[0] == "ERR":
             raise RuntimeError(header)
@@ -264,7 +296,7 @@ class Agent:
 
     def execute(self, command):
         self.send_line("EXEC\t" + command)
-        return self.receive_payload("OUTPUT")
+        return self.receive_payload("OUTPUT", 330)
 
     def get(self, remote_path):
         self.send_line("GET\t" + remote_path)
@@ -300,6 +332,10 @@ def main():
     )
     parser.add_argument("--baud", type=int, choices=SUPPORTED_BAUDS,
                         default=115200)
+    parser.add_argument(
+        "--legacy-sync", action="store_true",
+        help="accept the V4-V7 SYNC error during a clean upgrade session",
+    )
     sub = parser.add_subparsers(dest="action", required=True)
     sub.add_parser("ping")
     sub.add_parser("bye")
@@ -317,7 +353,8 @@ def main():
     )
     args = parser.parse_args()
 
-    agent = Agent(args.port, args.baud)
+    agent = Agent(args.port, args.baud,
+                  allow_legacy_sync=args.legacy_sync)
     try:
         if args.action == "session":
             print("BRIDGE CONNECTED. Start W98AGENT, then type START here.",
@@ -376,8 +413,13 @@ def main():
             print(f"[exit {result}]")
             return result
         if args.action == "get":
+            destination = pathlib.Path(args.local_path)
+            if not destination.parent.is_dir():
+                raise FileNotFoundError(
+                    f"destination directory does not exist: {destination.parent}"
+                )
             data = agent.get(args.remote_path)
-            pathlib.Path(args.local_path).write_bytes(data)
+            destination.write_bytes(data)
             print(f"received {len(data)} bytes")
             return 0
         if args.action == "put":

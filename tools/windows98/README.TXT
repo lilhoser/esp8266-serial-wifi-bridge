@@ -16,14 +16,16 @@ W98AGENT.EXE [baud]
   C:\W98AGENT 19200
   Use W98SER/2 only on a trusted isolated network. Type BYE in the client to
   stop the agent cleanly.
+  V9 requires the client SYNC barrier and never force-kills a timed-out DOS
+  child. Do not run PAUSE or other interactive commands through EXEC.
 
 Supported rates:
   300 1200 2400 4800 9600 19200 38400 57600 115200
 
 Notes:
   - A brief garbage line before the banner is the ESP8266 ROM at 74880 baud.
-  - SERIALWIFI> is unavailable while a TCP peer is connected.
-  - Close the TCP client to restore the prompt. If needed, press Enter once.
+  - Build 15 latches transparent mode after the first TCP connection.
+  - Reconnect a client to resume. Press Reset to restore SERIALWIFI>.
   - Hold Flash for five seconds while running to restore saved baud to 300.
   - Do not hold Flash during power-on or Reset; that selects ROM bootloader.
 

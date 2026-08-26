@@ -44,14 +44,12 @@ state left by older terminal programs.
 
 ## Command mode versus bridge mode
 
-`SERIALWIFI>` is available only when no TCP client is connected. During
-`REMOTE CONNECTED`, all serial bytes are payload and firmware commands are not
-interpreted. Close the TCP client to return to command mode.
-
-On the tested ESP8266 stack, a peer that has just closed may not be reported as
-disconnected until the next serial activity. If the prompt does not return,
-press Enter once. The firmware then prints `REMOTE DISCONNECTED` followed by
-`SERIALWIFI>`. Press Reset if a dead TCP session still does not clear.
+`SERIALWIFI>` is available after reset and before the first TCP client claims
+the bridge. Build 15 then latches transparent mode until hardware reset. If a
+peer closes, connect a new peer to resume bridging; the adapter discards serial
+traffic while disconnected so an unattended agent cannot feed protocol bytes
+into the firmware command parser. Press Reset when local command mode is
+actually required.
 
 ## LINEPASS
 
@@ -92,12 +90,12 @@ PowerShell:
 The executables are written under `build\windows98`. The GitHub release also
 provides ready-built copies, so Windows 98 users do not need a compiler.
 
-The hardware-tested v0.4.0-rc1 package contains:
+The hardware-tested v0.4.0-rc2 package contains:
 
 | File | Size | SHA-256 |
 |---|---:|---|
 | `W98TERM.EXE` | 33,280 | `CF2E350A3B0ACFF9C5ED5BC0C0BE2EA674A62DDCDFE5F8BEF2B1493142B82987` |
 | `LINEPASS.EXE` | 35,328 | `F2F5500828E448F95AC4197183D7E84B3FA6577285A11C5853BC33668B5EF90D` |
-| `W98AGENT.EXE` | 35,328 | `4395B26157F572AB4C0816352F0D6061B77012F75C7A97D578D41B36AE447B7B` |
+| `W98AGENT.EXE` | 35,840 | `2D498AD662E505CE8D945B8B2F19EDFDC6CF84D383EA6CFD629BA84A442DD274` |
 
 The ZIP itself is covered by `release/SHA256SUMS.txt`.

@@ -18,6 +18,18 @@ Commands are `HELLO`, `PING`, `EXEC<TAB>command`, `GET<TAB>path`,
 `PUT<TAB>size<TAB>crc32<TAB>path`, and `BYE`. File or output metadata is
 `kind<TAB>size<TAB>crc32<TAB>result`, where `kind` is `FILE` or `OUTPUT`.
 
+W98AGENT V8 and newer also implement an ordered recovery barrier:
+
+```text
+SYNC<TAB>token
+SYNCED<TAB>token
+```
+
+After receiving `READY`, the modern client sends a unique token and ignores
+all delayed lines until that exact token returns. Only then may it issue the
+first command. This prevents replies queued by an abandoned TCP client from
+being mistaken for the new command's response.
+
 ## Binary frame
 
 All multibyte integers are little-endian.

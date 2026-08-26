@@ -64,6 +64,7 @@ uint32_t activeBaud = kDefaultBaud;
 uint32_t flashPressedAt = 0;
 bool flashPressActive = false;
 bool baudRecoveryTriggered = false;
+bool transparentBridgeMode = false;
 
 uint32_t checksum(const uint8_t* data, size_t length) {
   uint32_t value = 2166136261UL;
@@ -203,7 +204,7 @@ void printHelp() {
 
 void printStatus() {
   Serial.println();
-  Serial.println("BUILD: SERIAL-WIFI-BRIDGE-13-VARIABLE-BAUD-RC");
+  Serial.println("BUILD: SERIAL-WIFI-BRIDGE-15-TRANSPARENT-RC");
   Serial.print("SERIAL: V4 UART0 GPIO1/GPIO3 ");
   Serial.print(activeBaud);
   Serial.println(" 8-N-1 NO FLOW");
@@ -433,11 +434,18 @@ void serviceWifi() {
 
 void serviceBridge() {
   if (WiFi.status() != WL_CONNECTED) return;
-  if ((!client || !client.connected()) && server.hasClient()) {
+  // The ESP8266 TCP stack can keep a dead peer in connected() state until
+  // another write occurs. Always let the newest connection take ownership so
+  // a crashed maintenance client cannot strand the serial bridge.
+  if (server.hasClient()) {
     if (client) client.stop();
     client = server.accept();
     client.setNoDelay(true);
-    Serial.println("\r\nREMOTE CONNECTED");
+    // Once a TCP peer claims the UART, keep it as a transparent data channel
+    // until hardware reset.  Falling back to the command parser after a peer
+    // disappears would interpret an agent's orphaned protocol bytes as local
+    // commands and inject console errors back into that protocol stream.
+    transparentBridgeMode = true;
   }
   if (!client || !client.connected()) return;
 
@@ -509,7 +517,7 @@ void setup() {
   delay(150);
 
   Serial.println();
-  Serial.println("VINTAGE SERIAL WIFI BRIDGE 13 VARIABLE BAUD RC");
+  Serial.println("VINTAGE SERIAL WIFI BRIDGE 15 TRANSPARENT RC");
   Serial.print("UART0 GPIO1/GPIO3 ");
   Serial.print(activeBaud);
   Serial.println(" 8-N-1 NO FLOW");
@@ -532,7 +540,8 @@ void loop() {
 
   if (!client || !client.connected()) {
     while (Serial.available() > 0) {
-      consumeSerialByte(static_cast<uint8_t>(Serial.read()));
+      const uint8_t value = static_cast<uint8_t>(Serial.read());
+      if (!transparentBridgeMode) consumeSerialByte(value);
     }
   }
   yield();

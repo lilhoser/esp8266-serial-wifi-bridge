@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.4.0-rc2 - 2026-08-26
+
+- Add firmware build 15, which lets the newest TCP peer replace a stale peer
+  and latches transparent bridge mode until reset. Orphaned serial output is
+  discarded instead of being interpreted by the firmware command console.
+- Add W98AGENT V9 and an exact tokenized `SYNC` recovery barrier so queued
+  responses from a crashed client cannot be consumed as a new command reply.
+- Bound transfer waits and remote commands. A timed-out DOS child is abandoned,
+  never force-terminated, avoiding the observed Windows 98 WinOldAp lockup.
+- Make the client validate a GET destination directory before transferring.
+- Validate firmware upload plus exact application read-back, ordinary command
+  execution, framed upload/download, safe timeout, natural child exit, and
+  synchronized reconnect on the reference Presario 5875 at 19200 baud.
+
 ## v0.4.0-rc1 - 2026-08-26
 
 - Add W98AGENT V4 and its modern serial/TCP controller for remote Windows 98

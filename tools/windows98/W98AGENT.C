@@ -7,7 +7,7 @@
 
 #define LINE_CAPACITY 1024
 #define IO_CHUNK 256
-#define EXEC_TIMEOUT_MS 300000UL
+#define EXEC_TIMEOUT_MS 60000UL
 #define FRAME_RETRIES 10
 #define FRAME_TIMEOUT_MS 5000UL
 #define FRAME_MAGIC_0 'W'
@@ -19,6 +19,7 @@
 #define FRAME_NAK 'N'
 #define FRAME_FIN 'F'
 #define FRAME_CONFIRM 'C'
+#define CANCEL_BYTE 0x18
 
 static HANDLE serial_port = INVALID_HANDLE_VALUE;
 static DWORD active_baud = 115200;
@@ -164,15 +165,18 @@ static int send_line(const char *format, ...)
     return serial_write_all(buffer, (DWORD)length);
 }
 
-static int read_line(char *buffer, DWORD capacity)
+static int read_line_timeout(char *buffer, DWORD capacity, DWORD timeout_ms)
 {
     DWORD used = 0;
+    DWORD deadline = GetTickCount() + timeout_ms;
     for (;;) {
         BYTE value;
         DWORD received = 0;
         int result = serial_read_byte(&value);
         if (result < 0) return 0;
         if (result == 0) {
+            if (timeout_ms != 0 &&
+                (LONG)(deadline - GetTickCount()) <= 0) return 0;
             Sleep(5);
             continue;
         }
@@ -183,6 +187,11 @@ static int read_line(char *buffer, DWORD capacity)
         }
         if (used + 1 < capacity) buffer[used++] = (char)value;
     }
+}
+
+static int read_line(char *buffer, DWORD capacity)
+{
+    return read_line_timeout(buffer, capacity, 0);
 }
 
 static int read_bytes_timeout(BYTE *buffer, DWORD length, DWORD timeout_ms)
@@ -240,6 +249,7 @@ static int read_frame(BYTE *type, DWORD *sequence, BYTE *payload,
             Sleep(1);
             continue;
         }
+        if (value == CANCEL_BYTE) return -3;
         if (value == magic[matched]) {
             ++matched;
             if (matched == 4) break;
@@ -282,6 +292,7 @@ static int send_frame_reliable(BYTE type, DWORD sequence,
         if (!send_frame_once(type, sequence, payload, length)) return 0;
         result = read_frame(&reply_type, &reply_sequence, reply_payload,
                             &reply_length, FRAME_TIMEOUT_MS);
+        if (result == -3) return 0;
         if (result == 1 && reply_sequence == sequence &&
             reply_type == FRAME_ACK) return 1;
         if (result == 1 && reply_sequence == sequence &&
@@ -302,6 +313,7 @@ static int receive_frames_to_file(HANDLE file, DWORD total_size,
     while (received_total < total_size) {
         int result = read_frame(&type, &sequence, payload, &length,
                                 FRAME_TIMEOUT_MS);
+        if (result == -3) return 0;
         if (result != 1) {
             send_ack(FRAME_NAK, expected_sequence);
             if (++failures >= FRAME_RETRIES) return 0;
@@ -329,6 +341,7 @@ static int receive_frames_to_file(HANDLE file, DWORD total_size,
     for (failures = 0; failures < FRAME_RETRIES; ++failures) {
         int result = read_frame(&type, &sequence, payload, &length,
                                 FRAME_TIMEOUT_MS);
+        if (result == -3) return 0;
         if (result != 1) continue;
         if (type == FRAME_FIN && sequence == expected_sequence && length == 8 &&
             get_u32(payload) == total_size && get_u32(payload + 4) == crc &&
@@ -375,7 +388,24 @@ static int file_crc_and_size(HANDLE file, DWORD *size_out, DWORD *crc_out)
 static int wait_ready(void)
 {
     char line[64];
-    return read_line(line, sizeof(line)) && strcmp(line, "READY") == 0;
+    return read_line_timeout(line, sizeof(line), 15000UL) &&
+           strcmp(line, "READY") == 0;
+}
+
+static int cancel_requested(void)
+{
+    BYTE value;
+    int result = serial_read_byte(&value);
+    if (result <= 0) return 0;
+    return value == CANCEL_BYTE;
+}
+
+static int is_cancel_line(const char *line)
+{
+    const BYTE *p = (const BYTE *)line;
+    if (*p == '\0') return 0;
+    while (*p == CANCEL_BYTE) ++p;
+    return *p == '\0';
 }
 
 static int send_file_handle(HANDLE file, const char *kind, DWORD result_code)
@@ -456,7 +486,7 @@ static void handle_exec(const char *command)
     SECURITY_ATTRIBUTES security;
     STARTUPINFOA startup;
     PROCESS_INFORMATION process;
-    HANDLE output;
+    HANDLE output, input;
     DWORD wait_result, exit_code = 0;
 
     if (GetTempPathA(sizeof(temp_dir), temp_dir) == 0 ||
@@ -475,28 +505,43 @@ static void handle_exec(const char *command)
         send_line("ERR\tTEMP_OPEN\t%lu", GetLastError());
         return;
     }
+    input = CreateFileA("NUL", GENERIC_READ,
+                        FILE_SHARE_READ | FILE_SHARE_WRITE, &security,
+                        OPEN_EXISTING, 0, NULL);
+    if (input == INVALID_HANDLE_VALUE) {
+        CloseHandle(output);
+        DeleteFileA(temp_file);
+        send_line("ERR\tNUL_OPEN\t%lu", GetLastError());
+        return;
+    }
     _snprintf(command_line, sizeof(command_line) - 1, "COMMAND.COM /C %s", command);
     command_line[sizeof(command_line) - 1] = '\0';
     ZeroMemory(&startup, sizeof(startup));
     startup.cb = sizeof(startup);
     startup.dwFlags = STARTF_USESTDHANDLES | STARTF_USESHOWWINDOW;
     startup.wShowWindow = SW_HIDE;
-    startup.hStdInput = GetStdHandle(STD_INPUT_HANDLE);
+    startup.hStdInput = input;
     startup.hStdOutput = output;
     startup.hStdError = output;
     ZeroMemory(&process, sizeof(process));
     if (!CreateProcessA(NULL, command_line, NULL, NULL, TRUE, 0, NULL, NULL,
                         &startup, &process)) {
         DWORD error = GetLastError();
+        CloseHandle(input);
         CloseHandle(output);
         DeleteFileA(temp_file);
         send_line("ERR\tEXEC_START\t%lu", error);
         return;
     }
+    CloseHandle(input);
     wait_result = WaitForSingleObject(process.hProcess, EXEC_TIMEOUT_MS);
-    if (wait_result == WAIT_TIMEOUT) {
-        TerminateProcess(process.hProcess, 124);
-        WaitForSingleObject(process.hProcess, 5000);
+    if (wait_result != WAIT_OBJECT_0) {
+        CloseHandle(process.hThread);
+        CloseHandle(process.hProcess);
+        CloseHandle(output);
+        DeleteFileA(temp_file);
+        send_line("ERR\tEXEC_TIMEOUT");
+        return;
     }
     GetExitCodeProcess(process.hProcess, &exit_code);
     CloseHandle(process.hThread);
@@ -573,7 +618,7 @@ int main(int argc, char **argv)
             return 2;
         }
     }
-    printf("W98AGENT V4 - COM1 %lu-8-N-1\n", active_baud);
+    printf("W98AGENT V9 - COM1 %lu-8-N-1\n", active_baud);
     puts("Close this window to stop the agent.");
     if (!open_serial()) {
         printf("Cannot open/configure COM1 (Windows error %lu).\n", GetLastError());
@@ -582,8 +627,12 @@ int main(int argc, char **argv)
     sprintf(ready, "READY\tW98SER/2\t%lu", active_baud);
     send_line(ready);
     while (read_line(line, sizeof(line))) {
-        if (strcmp(line, "HELLO") == 0 || strcmp(line, "PING") == 0) {
+        if (is_cancel_line(line)) {
+            /* Accepted only for compatibility with an earlier V5 client. */
+        } else if (strcmp(line, "HELLO") == 0 || strcmp(line, "PING") == 0) {
             send_line(ready);
+        } else if (strncmp(line, "SYNC\t", 5) == 0 && line[5] != '\0') {
+            send_line("SYNCED\t%s", line + 5);
         } else if (strncmp(line, "EXEC\t", 5) == 0) {
             handle_exec(line + 5);
         } else if (strncmp(line, "GET\t", 4) == 0) {

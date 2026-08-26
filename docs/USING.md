@@ -117,16 +117,19 @@ command being typed at the prompt.
 
 ## TCP bridge
 
-Only one TCP client is accepted at a time on port 23. Once connected, bytes are
-passed directly between TCP and the serial port. There is no Telnet option
-negotiation, encryption, authentication, or character-set conversion.
+Only one TCP client owns the bridge at a time on port 23. A newly accepted TCP
+connection replaces the previous peer, including a stale peer that the ESP8266
+network stack still reports as connected. Once connected, bytes are passed
+directly between TCP and the serial port. There is no Telnet option negotiation,
+encryption, authentication, or character-set conversion.
 
-The `SERIALWIFI>` command prompt is intentionally unavailable while a TCP
-client is connected because every serial byte is bridge payload. Close the TCP
-client to return to command mode. On the tested ESP8266 stack, disconnect may
-not be reported until the next serial activity; press Enter once if
-`REMOTE DISCONNECTED` and the prompt do not appear. Reset is the fallback for
-a dead client that cannot be closed normally.
+The `SERIALWIFI>` command prompt is intentionally unavailable after a TCP
+client claims the bridge because every serial byte is bridge payload. Build 15
+latches transparent mode until hardware reset. If the TCP client disappears,
+serial bytes are discarded rather than parsed as firmware commands; this keeps
+an unattended vintage-host agent from entering a feedback loop with the local
+console. Connect a new client to resume bridging, or press hardware Reset to
+return to command mode. A new client replaces a stale prior peer immediately.
 
 Windows 98 users should see [Windows 98 terminal and link test](WINDOWS98.md)
 for local display, fresh-session, boot-garbage, and rate-validation behavior.

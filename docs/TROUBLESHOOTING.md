@@ -31,7 +31,7 @@ Run `python scripts/link-test.py PORT` from a modern host to verify complete
 
 The current firmware resolves initial association before printing
 `SERIALWIFI>`. Confirm `STATUS` identifies build
-`SERIAL-WIFI-BRIDGE-13-VARIABLE-BAUD-RC`.
+`SERIAL-WIFI-BRIDGE-15-TRANSPARENT-RC`.
 Older private prototypes printed a prompt too early.
 
 ## Wi-Fi fails
@@ -55,9 +55,11 @@ This display-only newline is not added to the TCP payload.
 
 ## Prompt does not return after the TCP client closes
 
-The prompt is disabled during transparent bridge mode. Some disconnects are
-reported only after the next serial activity; press Enter once. Expect
-`REMOTE DISCONNECTED` followed by `SERIALWIFI>`. Press Reset if the dead
-session still does not clear. Use a fresh DOS Prompt after any terminal crash
-or abnormal exit so stale screen and console state are not mistaken for live
-adapter output.
+The prompt is disabled during transparent bridge mode. Build 15 and newer let
+the newest TCP connection replace the prior peer even when the ESP8266 network
+stack has not yet noticed that the old socket died. This permits maintenance
+software to reconnect without pressing Reset. Once a TCP peer has connected,
+transparent mode stays latched and the firmware console will not return merely
+because that peer closes; press hardware Reset to return to `SERIALWIFI>`.
+Use a fresh DOS Prompt after a terminal crash or abnormal exit so stale screen
+and console state are not mistaken for live adapter output.
