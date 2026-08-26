@@ -12,6 +12,7 @@ The release image is built for this electrical and firmware profile:
 | UART | UART0, TX GPIO1, RX GPIO3 |
 | RS-232 level conversion | MAX3232-compatible transceiver |
 | Serial format | 300 baud, 8-N-1 |
+| DB9 control | CTS asserted from GPIO15; RTS sensed at GPIO13 but ignored |
 | Flow control | None |
 | Wi-Fi indicator | Active-low GPIO16 |
 

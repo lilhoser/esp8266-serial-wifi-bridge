@@ -15,7 +15,7 @@ flash mode, normal UART0 on GPIO1/GPIO3, and a fixed serial profile of
 Most users do not need to build anything. Download these two files from the
 latest GitHub release:
 
-- `esp8266-serial-wifi-bridge-v0.1.0.bin`
+- `esp8266-serial-wifi-bridge-v0.2.0-rc1.bin`
 - `SHA256SUMS.txt`
 
 On a modern Windows computer, clone or download this repository, open
@@ -40,8 +40,15 @@ Connect at **300-8-N-1** with DTR, RTS, hardware flow control, and software flow
 control disabled. Reset the bridge and wait. Startup always finishes its Wi-Fi
 attempt before displaying the prompt:
 
+For a keyboard-independent round-trip check, install the Python tools and run
+`python scripts/link-test.py PORT`. The test submits complete `AT` lines and
+requires an exact `OK` response for 20 rounds without changing Wi-Fi
+configuration or flash contents. Firmware command echo is intentionally off;
+this prevents a carrier's electrical reflection from doubling/interleaving
+characters with a second firmware-generated copy.
+
 ```text
-VINTAGE SERIAL WIFI BRIDGE 2
+VINTAGE SERIAL WIFI BRIDGE 12 ECHO-OFF RC
 CONNECTING TO example-network
 WIFI CONNECTED - IP <assigned-address>
 TCP 23 READY
@@ -49,7 +56,13 @@ SERIALWIFI>
 ```
 
 Type `WIFI` for guided setup, `STATUS` for current state, or `HELP` for all
-commands. Wi-Fi passwords are not echoed. See [Using the bridge](docs/USING.md).
+commands. The firmware does not echo commands or passwords; enable terminal
+local echo only if your adapter/cable does not already reflect transmitted
+characters. See [Using the bridge](docs/USING.md).
+
+The v0.2.0-rc1 image has passed guided configuration, 20-round USB and external
+RS-232 command tests, and bidirectional TCP/serial payload acceptance on the
+reference ESP8266/MAX3232 carrier and Windows 98 host.
 
 ## Build from source
 

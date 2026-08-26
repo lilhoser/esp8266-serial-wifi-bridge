@@ -13,6 +13,13 @@
 Start the terminal before resetting the bridge so the one-time banner is not
 lost.
 
+Firmware command echo is disabled. Some MAX3232 carrier boards electrically
+reflect transmitted characters back to the terminal, so typing remains visible
+without any software echo. If your hardware does not, enable terminal local
+echo. Never enable local echo when characters are already visible, or each
+keystroke will appear twice. Backspace is still interpreted by the command-line
+editor even when no erase sequence is transmitted.
+
 ## Commands
 
 | Command | Purpose |
@@ -24,8 +31,10 @@ lost.
 | `HANGUP` or `ATH` | Close the active TCP client |
 | `HELP`, `AT?`, or `ATHELP` | Command list |
 
-Password input is hidden. Setup accepts WPA/WPA2-style ASCII passphrases from
-8 through 63 characters. The firmware stores the SSID and password in a
+The exact received SSID is displayed and must be confirmed before password
+entry. Password input is hidden and must be entered twice identically before
+it can be saved. Setup accepts WPA/WPA2-style ASCII passphrases from 8 through
+63 characters. The firmware stores the confirmed SSID and password in a
 checksummed EEPROM record on the device.
 
 ## Startup behavior

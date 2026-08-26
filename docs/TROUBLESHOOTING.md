@@ -17,14 +17,17 @@ state. Prove modern-host USB serial and external RS-232 paths separately.
 
 ## Doubled characters
 
-Disable terminal local echo first. Some carrier/terminal combinations reflect
-transmitted bytes in addition to firmware or remote echo. Test with a single
-`AT` and confirm that the parser returns one `OK` before changing firmware.
+Current firmware does not echo command characters. Some carrier/terminal
+combinations electrically reflect transmitted bytes, which is sufficient to
+make typing visible. Disable terminal local echo if characters appear twice.
+Run `python scripts/link-test.py PORT` from a modern host to verify complete
+`AT`/`OK` transactions without depending on interactive typing.
 
 ## Wi-Fi output interrupts a command
 
-The v0.1.0 firmware resolves initial association before printing
-`SERIALWIFI>`. Confirm the banner identifies build `SERIAL-WIFI-BRIDGE-2`.
+The current firmware resolves initial association before printing
+`SERIALWIFI>`. Confirm `STATUS` identifies build
+`SERIAL-WIFI-BRIDGE-12-ECHO-OFF-RC`.
 Older private prototypes printed a prompt too early.
 
 ## Wi-Fi fails

@@ -117,7 +117,11 @@ def main() -> int:
         send_line(port, "WIFI")
         read_until(port, b"SSID: ", 8)
         send_line(port, args.ssid)
+        read_until(port, b"USE THIS SSID (Y/N)? ", 8)
+        send_line(port, "Y")
         read_until(port, b"PASSWORD (HIDDEN): ", 8)
+        send_line(port, password)
+        read_until(port, b"RE-ENTER PASSWORD (HIDDEN): ", 8)
         send_line(port, password)
         read_until(port, b"SAVE AND CONNECT (Y/N)? ", 10)
         password = ""  # Drop the local reference before association output.
