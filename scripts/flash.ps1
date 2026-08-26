@@ -2,7 +2,7 @@
 param(
     [Parameter(Mandatory = $true)]
     [string]$Port,
-    [string]$Binary = 'release\esp8266-serial-wifi-bridge-v0.2.0-rc1.bin',
+    [string]$Binary = 'release\esp8266-serial-wifi-bridge-v0.3.0-rc1.bin',
     [switch]$Yes
 )
 

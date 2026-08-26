@@ -3,11 +3,15 @@
 ## No banner
 
 - Start the terminal before pressing reset.
-- Confirm 300-8-N-1.
+- Confirm the saved baud and 8-N-1. New and migrated installs start at 300.
 - Disable DTR, RTS, RTS/CTS, DSR/DTR, and XON/XOFF.
 - Confirm the correct COM port and that no other application owns it.
 - Expect one brief unreadable ESP8266 ROM message at 74880 baud before the
-  firmware switches to 300 baud.
+  firmware switches to the saved baud.
+
+If the saved rate is unknown, boot normally, wait at least five seconds, then
+hold Flash for five seconds while the application is running. Release after the
+Wi-Fi LED blinks. Do not hold Flash during power-on or Reset.
 
 ## Repeated garbage
 
@@ -27,7 +31,7 @@ Run `python scripts/link-test.py PORT` from a modern host to verify complete
 
 The current firmware resolves initial association before printing
 `SERIALWIFI>`. Confirm `STATUS` identifies build
-`SERIAL-WIFI-BRIDGE-12-ECHO-OFF-RC`.
+`SERIAL-WIFI-BRIDGE-13-VARIABLE-BAUD-RC`.
 Older private prototypes printed a prompt too early.
 
 ## Wi-Fi fails
@@ -42,3 +46,18 @@ Older private prototypes printed a prompt too early.
 Some operating systems may mistake unsolicited serial data for a serial mouse.
 Disconnect the adapter, reboot, and inspect the operating system's pointing
 device configuration before changing firmware or COM resources.
+
+## Enter sends data but the cursor stays on the same line
+
+Raw TCP peers do not necessarily echo a newline. Use W98TERM V7 or newer on
+Windows 98; it renders one local CR/LF after Enter while `REMOTE CONNECTED`.
+This display-only newline is not added to the TCP payload.
+
+## Prompt does not return after the TCP client closes
+
+The prompt is disabled during transparent bridge mode. Some disconnects are
+reported only after the next serial activity; press Enter once. Expect
+`REMOTE DISCONNECTED` followed by `SERIALWIFI>`. Press Reset if the dead
+session still does not clear. Use a fresh DOS Prompt after any terminal crash
+or abnormal exit so stale screen and console state are not mistaken for live
+adapter output.

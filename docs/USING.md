@@ -2,7 +2,7 @@
 
 ## Serial settings
 
-- 300 baud
+- saved baud rate; 300 for a new or migrated installation
 - 8 data bits
 - no parity
 - 1 stop bit
@@ -27,6 +27,9 @@ editor even when no erase sequence is transmitted.
 | `AT` | Presence check; returns `OK` |
 | `WIFI` | Guided SSID/password setup and connection |
 | `STATUS` or `ATI` | Configuration, Wi-Fi, IP, TCP, and remote state |
+| `BAUD` or `AT$SB?` | Active, saved, and supported serial rates |
+| `BAUD N` or `AT$SB=N` | Save a rate; Reset applies it |
+| `BAUD RESET` | Save 300 baud |
 | `CONNECT` or `ATC1` | Retry using saved network settings |
 | `HANGUP` or `ATH` | Close the active TCP client |
 | `HELP`, `AT?`, or `ATHELP` | Command list |
@@ -36,6 +39,58 @@ entry. Password input is hidden and must be entered twice identically before
 it can be saved. Setup accepts WPA/WPA2-style ASCII passphrases from 8 through
 63 characters. The firmware stores the confirmed SSID and password in a
 checksummed EEPROM record on the device.
+
+## Changing serial speed
+
+Supported rates are 300, 1200, 2400, 4800, 9600, 19200, 38400, 57600, and
+115200 baud. `BAUD N` saves the requested value but deliberately leaves the
+current session unchanged. After the acknowledgement:
+
+1. exit the terminal;
+2. reopen it at the new rate; and
+3. press Reset on the adapter.
+
+`STATUS` reports both active and saved values. Wi-Fi credentials survive a baud
+change. Firmware v0.2.0-rc1 settings are migrated automatically with 300 baud
+as their initial saved rate.
+
+For recovery, boot normally and wait at least five seconds. Then hold the Flash
+button for five seconds while the firmware is running. Release it after the
+Wi-Fi LED blinks; the adapter restarts at 300 baud. Do not hold Flash during
+power-on or Reset because GPIO0 low selects the ESP8266 ROM bootloader.
+
+## Serial speed versus Wi-Fi speed
+
+The `BAUD` setting changes only UART/RS-232 communication between the vintage
+computer and adapter. It does not change the ESP8266's 2.4 GHz 802.11b/g/n
+Wi-Fi association or TCP connection. The radio negotiates its own link rate
+with the access point; it does not run at the selected serial baud. End-to-end
+payload throughput is nevertheless limited by the serial side because every
+byte entering or leaving the vintage computer must cross that UART.
+
+Ignoring protocol overhead, 8-N-1 carries roughly one payload byte per ten
+serial bits:
+
+| Baud | Approximate raw rate | Approximate time per MiB |
+|---:|---:|---:|
+| 300 | 30 B/s | 9.7 hours |
+| 9,600 | 960 B/s | 18 minutes |
+| 19,200 | 1,920 B/s | 9.1 minutes |
+| 38,400 | 3,840 B/s | 4.6 minutes |
+| 57,600 | 5,760 B/s | 3.0 minutes |
+| 115,200 | 11,520 B/s | 1.5 minutes |
+
+Real file transfers are slower. Validate the fastest reliable rate for the
+specific UART, cable, and software before moving important data.
+
+On the reference The Old Net V4 carrier connected directly to a Compaq
+Presario 5875, 19200 passed all 20 whole-line rounds with exact payloads and
+also passed a bidirectional TCP/serial token test. Rates of 38400, 57600, and
+115200 failed the external DB9 stress test with UART framing errors, even
+though the adapter USB-UART and the Presario/null-modem control path each
+passed separately at 115200. This is a measured compatibility result for that
+combination, not a universal limit. Start at 300 and validate before selecting
+a faster saved rate.
 
 ## Startup behavior
 
@@ -65,3 +120,27 @@ command being typed at the prompt.
 Only one TCP client is accepted at a time on port 23. Once connected, bytes are
 passed directly between TCP and the serial port. There is no Telnet option
 negotiation, encryption, authentication, or character-set conversion.
+
+The `SERIALWIFI>` command prompt is intentionally unavailable while a TCP
+client is connected because every serial byte is bridge payload. Close the TCP
+client to return to command mode. On the tested ESP8266 stack, disconnect may
+not be reported until the next serial activity; press Enter once if
+`REMOTE DISCONNECTED` and the prompt do not appear. Reset is the fallback for
+a dead client that cannot be closed normally.
+
+Windows 98 users should see [Windows 98 terminal and link test](WINDOWS98.md)
+for local display, fresh-session, boot-garbage, and rate-validation behavior.
+
+## End-to-end acceptance
+
+From a modern computer that can reach the bridge address, run:
+
+```powershell
+python .\test_bridge.py 192.0.2.10 --reply "SERIAL LINK OK"
+```
+
+Replace the documentation address with the bridge's reported address. The
+tool connects to TCP port 23 and sends instructions to the serial display.
+Type the requested reply on the serial terminal and press Enter. A successful
+test sends a visible `PASS - BIDIRECTIONAL BRIDGE CONFIRMED` message back to
+the vintage terminal before the TCP client closes.

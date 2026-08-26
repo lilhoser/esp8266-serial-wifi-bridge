@@ -8,7 +8,7 @@ fi
 
 repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 port=$1
-binary=${2:-"$repo_root/release/esp8266-serial-wifi-bridge-v0.2.0-rc1.bin"}
+binary=${2:-"$repo_root/release/esp8266-serial-wifi-bridge-v0.3.0-rc1.bin"}
 release_root="$repo_root/release/"
 fqbn='esp8266:esp8266:generic:eesz=4M,FlashMode=dout,FlashFreq=40,CrystalFreq=26,wipe=none'
 

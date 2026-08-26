@@ -12,12 +12,14 @@ from typing import Any
 
 
 BAUD = 300
+SUPPORTED_BAUDS = (300, 1200, 2400, 4800, 9600, 19200, 38400, 57600, 115200)
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--port", required=True, help="serial port, for example COM6")
     parser.add_argument("--ssid", required=True, help="Wi-Fi network name")
+    parser.add_argument("--baud", type=int, choices=SUPPORTED_BAUDS, default=BAUD)
     return parser.parse_args()
 
 
@@ -96,7 +98,7 @@ def main() -> int:
 
     port = serial.Serial()
     port.port = args.port
-    port.baudrate = BAUD
+    port.baudrate = args.baud
     port.timeout = 0.1
     port.xonxoff = False
     port.rtscts = False
@@ -105,14 +107,16 @@ def main() -> int:
     port.rts = False
     port.open()
     try:
-        # Opening USB normally resets the ESP8266. Startup now resolves Wi-Fi
-        # success/failure before exposing the command prompt.
+        print("Serial port open. Press the adapter Reset button now if needed.",
+              flush=True)
+        # Some USB development boards reset when the port opens and others do
+        # not. In either case, wait for completed startup before sending input.
         read_until(port, b"SERIALWIFI> ", 35)
         send_line(port, "AT")
         response = read_until(port, b"SERIALWIFI> ", 8)
         if b"OK" not in response:
             raise RuntimeError("Bridge did not acknowledge AT")
-        print(f"{args.port} V4 bridge ready at 300 baud.")
+        print(f"{args.port} bridge ready at {args.baud} baud.")
 
         send_line(port, "WIFI")
         read_until(port, b"SSID: ", 8)

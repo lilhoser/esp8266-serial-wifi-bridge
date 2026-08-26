@@ -1,9 +1,21 @@
 # Changelog
 
-## Unreleased
+## v0.3.0-rc1 - 2026-08-26
 
 - Send a visible PASS acknowledgement to the serial terminal after the
   interactive bidirectional test receives its expected response.
+- Add persistent standard baud rates from 300 through 115200, familiar
+  `AT$SB` aliases, status reporting, and delayed-until-reset activation.
+- Add a five-second Flash-button recovery that restores 300 baud without
+  changing Wi-Fi credentials.
+- Add W98TERM V7 with rate selection, reflection-safe local display, hidden
+  password entry, and a visible newline after Enter in TCP bridge mode; add
+  the matching 20-round LINEPASS utility and public Open Watcom build script.
+- Document The Old Net V4 hardware, vendor resources, project background,
+  compatibility boundaries, and serial-versus-Wi-Fi throughput.
+- Pass persistent 300-to-115200 change and physical 300-baud recovery over
+  USB. Validate 19200 as the reliable ceiling for the reference V4/Presario
+  DB9 pair with 20/20 exact rounds and bidirectional TCP/serial payloads.
 
 ## v0.2.0-rc1 - 2026-08-26
 

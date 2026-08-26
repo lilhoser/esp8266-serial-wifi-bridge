@@ -26,7 +26,6 @@ keep them private and never attach them to a public issue or release.
 ```
 
 6. Flash the verified release:
-5. Run:
 
 ```powershell
 .\scripts\flash.ps1 -Port COM3
@@ -42,6 +41,11 @@ The flash script:
 
 It does not request `erase_flash` or a full-chip wipe.
 
+NodeMCU-style boards normally enter the uploader automatically. If connection
+fails, hold Flash, tap Reset, release Flash, and retry the flash command. This
+button sequence is only for USB flashing; do not hold Flash during an ordinary
+application Reset.
+
 ## Linux or macOS workflow
 
 ```sh
@@ -54,5 +58,7 @@ Open a terminal at 300-8-N-1 with all flow control off, start the terminal
 first, then reset the bridge. A valid startup ends in `SERIALWIFI>` only after
 Wi-Fi has succeeded or failed.
 
-The v0.1.0 configuration record format is new. Firmware from an earlier private
-prototype will not reuse its saved network configuration; run `WIFI` once.
+Firmware v0.2.0-rc1 settings migrate automatically and begin with saved baud
+300. Other vendor or private firmware layouts are not imported; run `WIFI`
+once. After configuration, validate faster rates from 300 upward rather than
+assuming the maximum advertised value is reliable on a particular DB9 path.

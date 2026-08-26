@@ -11,10 +11,11 @@ The release image is built for this electrical and firmware profile:
 | Flash frequency | 40 MHz |
 | UART | UART0, TX GPIO1, RX GPIO3 |
 | RS-232 level conversion | MAX3232-compatible transceiver |
-| Serial format | 300 baud, 8-N-1 |
+| Serial format | 300-115200 baud selectable, 8-N-1 |
 | DB9 control | CTS asserted from GPIO15; RTS sensed at GPIO13 but ignored |
 | Flow control | None |
 | Wi-Fi indicator | Active-low GPIO16 |
+| Recovery button | GPIO0/Flash, hold five seconds while firmware is running |
 
 The `.bin` is an application image for address `0x000000`. It is not a full
 flash dump and does not contain user Wi-Fi configuration.

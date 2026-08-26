@@ -11,6 +11,7 @@ import serial
 PROMPT = b"SERIALWIFI> "
 COMMAND = b"AT\r"
 REPLY = b"\r\nOK\r\n" + PROMPT
+SUPPORTED_BAUDS = (300, 1200, 2400, 4800, 9600, 19200, 38400, 57600, 115200)
 
 
 def read_until_prompt(port, timeout):
@@ -29,15 +30,18 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("port", help="serial port, for example COM6 or /dev/ttyUSB0")
     parser.add_argument("--rounds", type=int, default=20)
+    parser.add_argument("--baud", type=int, choices=SUPPORTED_BAUDS, default=300)
     args = parser.parse_args()
 
-    port = serial.Serial(port=None, baudrate=300, bytesize=8, parity="N",
+    port = serial.Serial(port=None, baudrate=args.baud, bytesize=8, parity="N",
                          stopbits=1, timeout=0.1, write_timeout=3)
     port.port = args.port
     port.dtr = False
     port.rts = False
     port.open()
     try:
+        print(f"{args.port} open at {args.baud} baud; press adapter Reset now",
+              flush=True)
         startup = read_until_prompt(port, 35)
         if not startup.endswith(PROMPT):
             print(f"STARTUP FAIL: prompt not received; received {startup!r}",
@@ -61,7 +65,8 @@ def main():
                 return 1
             print(f"Round {round_number:02d}/{args.rounds:02d} passed", flush=True)
 
-        print(f"PASS - {args.rounds} whole-line AT/OK rounds over {args.port}", flush=True)
+        print(f"PASS - {args.rounds} whole-line AT/OK rounds over {args.port} "
+              f"at {args.baud} baud", flush=True)
         return 0
     finally:
         port.close()

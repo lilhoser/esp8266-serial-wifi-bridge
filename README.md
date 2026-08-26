@@ -7,15 +7,36 @@ there is no cloud service, web interface, telemetry, OTA updater, or embedded
 network credential.
 
 The supplied build targets a 4 MB ESP8266 device with a 26 MHz crystal, DOUT
-flash mode, normal UART0 on GPIO1/GPIO3, and a fixed serial profile of
-300 baud, 8 data bits, no parity, and one stop bit.
+flash mode, normal UART0 on GPIO1/GPIO3, and a selectable serial rate from 300
+through 115200 baud with 8 data bits, no parity, and one stop bit.
+
+## The Old Net V4 adapter
+
+This project was created for owners of **The Old Net RS232 Serial WiFi Modem
+V4**, an ESP8266/MAX3232 adapter sold through [TheOldNet.com](https://theoldnet.com/),
+the [The Old Net store](https://theoldnet.com/store), and
+[The Old Net on Tindie](https://www.tindie.com/stores/theoldnet/). The hardware
+is useful and readily serviceable, but the supplied/available modem firmware
+did not provide reliable DB9 operation in the Windows 98 machines that led to
+this project. For the tested legacy unit, no active vendor-support resolution
+was available to us, so the hardware needed a maintainable replacement stack.
+
+The [official firmware-binaries repository](https://github.com/TheOldNet/theoldnet-wifi-firmware-binaries)
+currently warns that its checked-in images are outdated and directs users to a
+separate download package. This repository provides a small, fully documented,
+open alternative for the specific use case of a raw serial-to-TCP bridge. It is
+independent of and not endorsed by The Old Net. It does not implement the
+official Hayes-modem, PPP, or SLIP feature set. See
+[Using this firmware on The Old Net V4 hardware](docs/THE-OLD-NET-V4.md) before
+flashing.
 
 ## Download and flash
 
 Most users do not need to build anything. Download these two files from the
 latest GitHub release:
 
-- `esp8266-serial-wifi-bridge-v0.2.0-rc1.bin`
+- `esp8266-serial-wifi-bridge-v0.3.0-rc1.bin`
+- `esp8266-serial-wifi-bridge-windows98-tools-v0.3.0-rc1.zip` (optional)
 - `SHA256SUMS.txt`
 
 On a modern Windows computer, clone or download this repository, open
@@ -36,19 +57,13 @@ first if the existing firmware matters.
 
 ## Configure and use
 
-Connect at **300-8-N-1** with DTR, RTS, hardware flow control, and software flow
-control disabled. Reset the bridge and wait. Startup always finishes its Wi-Fi
-attempt before displaying the prompt:
-
-For a keyboard-independent round-trip check, install the Python tools and run
-`python scripts/link-test.py PORT`. The test submits complete `AT` lines and
-requires an exact `OK` response for 20 rounds without changing Wi-Fi
-configuration or flash contents. Firmware command echo is intentionally off;
-this prevents a carrier's electrical reflection from doubling/interleaving
-characters with a second firmware-generated copy.
+Connect at the saved baud rate—**300-8-N-1** for a new or migrated installation—with
+DTR, RTS, hardware flow control, and software flow control disabled. Reset the
+bridge and wait. Startup always finishes its Wi-Fi attempt before displaying
+the prompt:
 
 ```text
-VINTAGE SERIAL WIFI BRIDGE 12 ECHO-OFF RC
+VINTAGE SERIAL WIFI BRIDGE 13 VARIABLE BAUD RC
 CONNECTING TO example-network
 WIFI CONNECTED - IP <assigned-address>
 TCP 23 READY
@@ -60,9 +75,31 @@ commands. The firmware does not echo commands or passwords; enable terminal
 local echo only if your adapter/cable does not already reflect transmitted
 characters. See [Using the bridge](docs/USING.md).
 
-The v0.2.0-rc1 image has passed guided configuration, 20-round USB and external
-RS-232 command tests, and bidirectional TCP/serial payload acceptance on the
-reference ESP8266/MAX3232 carrier and Windows 98 host.
+For guided setup from a modern Windows computer, install the Python tools and
+run:
+
+```powershell
+.\scripts\install-python-tools.ps1
+.\.tools\python-venv\Scripts\python.exe .\configure.py --port COM6 --ssid YOUR_SSID
+```
+
+The password is collected in a masked window and is not stored locally. Start
+the command, then press Reset if the startup banner does not appear
+automatically.
+
+For a keyboard-independent round-trip check, run
+`.\.tools\python-venv\Scripts\python.exe .\scripts\link-test.py COM6 --baud 300`,
+then press Reset. The test submits complete `AT` lines and requires an exact
+`OK` response for 20 rounds without changing Wi-Fi configuration or flash
+contents. Firmware command echo is intentionally off; this prevents a
+carrier's electrical reflection from doubling/interleaving characters with a
+second firmware-generated copy.
+
+The v0.3.0-rc1 image has passed guided configuration, persistent baud-change
+and physical 300-baud recovery tests, 20-round USB command tests at 300 and
+115200, and bidirectional TCP/serial payload acceptance. The reference The Old
+Net V4 carrier and Compaq Presario 5875 passed 20/20 external RS-232 rounds at
+19200; 38400 and higher produced framing errors on that specific DB9 path.
 
 ## Build from source
 
@@ -89,13 +126,18 @@ commands.
 - `scripts/` - toolchain, build, flash, and verification helpers
 - `configure.py` - optional masked modern-host Wi-Fi configurator
 - `test_bridge.py` - optional TCP/serial acceptance client
+- `tools/windows98/` - source for the tested Windows 98 terminal and link test
 - `docs/` - hardware, build, flashing, operation, and troubleshooting guides
+
+Windows 98 users can download the ready-built tools from the GitHub release.
+See [Windows 98 terminal and link test](docs/WINDOWS98.md).
 
 ## Safety and scope
 
-This firmware is intentionally fixed at 300 baud and TCP port 23. TCP port 23
-is unencrypted. Use it only on a trusted, isolated local network or through a
-separately secured tunnel. Do not expose it directly to the public Internet.
+This firmware supports standard serial rates from 300 through 115200 baud and
+uses TCP port 23. TCP port 23 is unencrypted. Use it only on a trusted,
+isolated local network or through a separately secured tunnel. Do not expose it
+directly to the public Internet.
 
 The initial release supports only the documented ESP8266/MAX3232 UART route.
 Do not flash an image merely because an enclosure or connector looks similar.
