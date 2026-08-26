@@ -1,12 +1,14 @@
-# Windows 98 terminal and link test
+# Windows 98 tools
 
-The release includes two 32-bit Windows console programs for systems where
+The release includes three 32-bit Windows console programs for systems where
 HyperTerminal is absent or unsuitable. They use Win32 serial APIs available in
 Windows 98 and require no installation:
 
 - `W98TERM.EXE` is the interactive terminal.
 - `LINEPASS.EXE` is a 20-round exact external-RS-232 stress test for carriers
   that reflect host TX back to host RX, including the tested The Old Net V4.
+- `W98AGENT.EXE` provides remote commands and reliable file transfer through
+  the bridge or a direct null-modem cable.
 
 Copy the files to the Windows 98 computer with a floppy, CD-R, existing network
 connection, or a trusted null-modem transfer. They fit together on a 1.44 MB
@@ -69,6 +71,14 @@ Do not select a rate merely because a banner is readable. Accept it only after
 all 20 rounds pass with no UART errors. The reference V4/Presario pair passed
 at 19200 and failed at 38400 and above.
 
+## W98AGENT
+
+W98AGENT uses the W98SER/2 framed protocol: numbered 256-byte blocks, per-frame
+CRC-32, ACK/NAK retransmission, duplicate suppression, and whole-file
+validation. Connect the modern TCP client before starting the agent. See
+[Remote Windows 98 agent](REMOTE-AGENT.md) for the complete procedure and
+[W98SER/2 protocol](W98SER2-PROTOCOL.md) for its wire format.
+
 ## Building the tools
 
 Install [Open Watcom v2](https://github.com/open-watcom/open-watcom-v2), set
@@ -82,11 +92,12 @@ PowerShell:
 The executables are written under `build\windows98`. The GitHub release also
 provides ready-built copies, so Windows 98 users do not need a compiler.
 
-The hardware-tested v0.3.0-rc1 package contains:
+The hardware-tested v0.4.0-rc1 package contains:
 
 | File | Size | SHA-256 |
 |---|---:|---|
 | `W98TERM.EXE` | 33,280 | `CF2E350A3B0ACFF9C5ED5BC0C0BE2EA674A62DDCDFE5F8BEF2B1493142B82987` |
 | `LINEPASS.EXE` | 35,328 | `F2F5500828E448F95AC4197183D7E84B3FA6577285A11C5853BC33668B5EF90D` |
+| `W98AGENT.EXE` | 35,328 | `4395B26157F572AB4C0816352F0D6061B77012F75C7A97D578D41B36AE447B7B` |
 
 The ZIP itself is covered by `release/SHA256SUMS.txt`.

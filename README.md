@@ -35,8 +35,8 @@ flashing.
 Most users do not need to build anything. Download these two files from the
 latest GitHub release:
 
-- `esp8266-serial-wifi-bridge-v0.3.0-rc1.bin`
-- `esp8266-serial-wifi-bridge-windows98-tools-v0.3.0-rc1.zip` (optional)
+- `esp8266-serial-wifi-bridge-v0.4.0-rc1.bin`
+- `esp8266-serial-wifi-bridge-windows98-tools-v0.4.0-rc1.zip` (optional)
 - `SHA256SUMS.txt`
 
 On a modern Windows computer, clone or download this repository, open
@@ -95,7 +95,7 @@ contents. Firmware command echo is intentionally off; this prevents a
 carrier's electrical reflection from doubling/interleaving characters with a
 second firmware-generated copy.
 
-The v0.3.0-rc1 image has passed guided configuration, persistent baud-change
+The firmware has passed guided configuration, persistent baud-change
 and physical 300-baud recovery tests, 20-round USB command tests at 300 and
 115200, and bidirectional TCP/serial payload acceptance. The reference The Old
 Net V4 carrier and Compaq Presario 5875 passed 20/20 external RS-232 rounds at
@@ -126,11 +126,14 @@ commands.
 - `scripts/` - toolchain, build, flash, and verification helpers
 - `configure.py` - optional masked modern-host Wi-Fi configurator
 - `test_bridge.py` - optional TCP/serial acceptance client
-- `tools/windows98/` - source for the tested Windows 98 terminal and link test
+- `tools/windows98/` - source for the tested terminal, link test, and remote agent
+- `tools/w98agent-client.py` - modern W98AGENT serial/TCP controller
 - `docs/` - hardware, build, flashing, operation, and troubleshooting guides
 
 Windows 98 users can download the ready-built tools from the GitHub release.
 See [Windows 98 terminal and link test](docs/WINDOWS98.md).
+For remote commands and reliable file transfer, see
+[Remote Windows 98 agent](docs/REMOTE-AGENT.md).
 
 ## Safety and scope
 

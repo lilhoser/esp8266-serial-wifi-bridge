@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-    [string]$Binary = 'release\esp8266-serial-wifi-bridge-v0.3.0-rc1.bin'
+    [string]$Binary = 'release\esp8266-serial-wifi-bridge-v0.4.0-rc1.bin'
 )
 
 $ErrorActionPreference = 'Stop'

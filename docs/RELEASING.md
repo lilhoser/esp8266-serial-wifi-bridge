@@ -12,7 +12,10 @@
 8. Copy only the application `.bin` to `release/`; never publish EEPROM or a
    complete flash capture.
 9. Update `release/SHA256SUMS.txt` and verify it from disk.
-10. Tag the exact commit and attach the `.bin` and checksum file to the release.
+10. Build the Windows 98 tools, run the W98SER/2 fault test, and verify the ZIP
+    contains the documented executables, controller, and agent documentation.
+11. Tag the exact commit and attach the `.bin`, tools ZIP, and checksum file to
+    the release.
 
 Do not call a release accepted solely because compilation or upload reported
 success. Hardware read-back and end-to-end serial/network behavior are separate

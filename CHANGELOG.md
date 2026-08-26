@@ -1,5 +1,20 @@
 # Changelog
 
+## v0.4.0-rc1 - 2026-08-26
+
+- Add W98AGENT V4 and its modern serial/TCP controller for remote Windows 98
+  commands and bidirectional file transfer.
+- Add W98SER/2 numbered 256-byte frames, per-frame CRC-32, ACK/NAK retries,
+  duplicate suppression, and validated whole-file completion.
+- Remove fixed per-block delays and tolerate damaged carrier-reflected copies;
+  the receiver's CRC and acknowledgement now determine delivery.
+- Pass deterministic corrupted-frame/lost-ACK recovery, direct null-modem
+  transfer, and sustained bidirectional Wi-Fi transfer at 19200 baud. A
+  55,981-byte Wi-Fi download and 35,328-byte upload/download round trip were
+  exact.
+- Add complete setup, operation, security, troubleshooting, build, and wire
+  protocol documentation. Firmware bytes are unchanged from v0.3.0-rc1.
+
 ## v0.3.0-rc1 - 2026-08-26
 
 - Send a visible PASS acknowledgement to the serial terminal after the

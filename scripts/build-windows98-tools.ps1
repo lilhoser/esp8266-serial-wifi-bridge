@@ -21,6 +21,7 @@ $output = [IO.Path]::GetFullPath((Join-Path $repoRoot $OutputDirectory))
 New-Item -ItemType Directory -Force -Path $output | Out-Null
 Copy-Item -LiteralPath (Join-Path $repoRoot 'tools\windows98\W98TERM.C') -Destination $output -Force
 Copy-Item -LiteralPath (Join-Path $repoRoot 'tools\windows98\LINEPASS.C') -Destination $output -Force
+Copy-Item -LiteralPath (Join-Path $repoRoot 'tools\windows98\W98AGENT.C') -Destination $output -Force
 
 $savedWatcom = $env:WATCOM
 $savedEdpath = $env:EDPATH
@@ -34,7 +35,7 @@ try {
                 (Join-Path $WatcomRoot 'binnt') + ';' + $env:PATH
     Push-Location $output
     try {
-        foreach ($source in @('W98TERM.C', 'LINEPASS.C')) {
+        foreach ($source in @('W98TERM.C', 'LINEPASS.C', 'W98AGENT.C')) {
             & $compiler -q -bt=nt -l=nt -dWINVER=0x0400 -d_WIN32_WINNT=0x0400 -6r -ox -s $source
             if ($LASTEXITCODE -ne 0) {
                 throw "Open Watcom failed while compiling $source."
@@ -50,4 +51,6 @@ try {
     $env:PATH = $savedPath
 }
 
-Get-FileHash (Join-Path $output 'W98TERM.EXE'), (Join-Path $output 'LINEPASS.EXE') -Algorithm SHA256
+Get-FileHash (Join-Path $output 'W98TERM.EXE'),
+             (Join-Path $output 'LINEPASS.EXE'),
+             (Join-Path $output 'W98AGENT.EXE') -Algorithm SHA256

@@ -10,6 +10,13 @@ LINEPASS.EXE [baud]
   C:\LINEPASS.TXT. Use only after the correct W98TERM banner is visible.
   Example: C:\LINEPASS 19200
 
+W98AGENT.EXE [baud]
+  Remote command and reliable file-transfer agent for COM1. Default: 115200.
+  With the Wi-Fi bridge, connect the modern TCP client FIRST, then run:
+  C:\W98AGENT 19200
+  Use W98SER/2 only on a trusted isolated network. Type BYE in the client to
+  stop the agent cleanly.
+
 Supported rates:
   300 1200 2400 4800 9600 19200 38400 57600 115200
 
@@ -22,3 +29,4 @@ Notes:
 
 Full documentation:
   https://github.com/lilhoser/esp8266-serial-wifi-bridge
+  See docs/REMOTE-AGENT.md for the complete agent workflow.
